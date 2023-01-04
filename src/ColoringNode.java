@@ -28,18 +28,18 @@ public class ColoringNode extends Node {
     public void onClock(){
         if (lp == l) {
             if (numberToCheck > 2) {
-                lastRoundSend();
+                coloration3Send();
 
                 if (numberToCheck == colorId)
-                    lastRoundReceive();
+                    coloration3Receive();
 
                 --numberToCheck;
             }
         } else
-            normalRound();
+            coloration6();
     }
 
-    private void normalRound(){
+    private void coloration6(){
         for (Message m : getMailbox()){
             if (m.getSender() != parent)
                 continue;
@@ -65,26 +65,28 @@ public class ColoringNode extends Node {
         }
     }
 
-    private void lastRoundSend(){
+    private void coloration3Send(){
         for (Node node : getNeighbors()){
             send(node, new Message(numberToCheck +  " " + colorId));
             System.out.println("Send to neighbors : " + colorId);
         }
     }
 
-    private void lastRoundReceive(){
+    private void coloration3Receive(){
         ArrayList<Integer> colors = new ArrayList<>();
 
         for (int i = getMailbox().size() - 1; i >= 0; --i){
             Message message = getMailbox().get(i);
             String[] arr = ((String)message.getContent()).split(" ");
 
+            // If the message was sent the previous round
             if (Integer.parseInt(arr[0]) == numberToCheck + 1)
                 colors.add(Integer.parseInt(arr[1]));
 
             getMailbox().remove(i);
         }
 
+        // First free
         for (int i = 0; i < colorId; ++i){
             boolean founded = false;
             for (Integer inte : colors){
