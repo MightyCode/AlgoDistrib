@@ -8,12 +8,18 @@ public class ColoringNode extends Node {
     public Node parent; // défini dans Main()
     public int n;
 
-    private int colorId;
+    private int colorId; // Dans l'algorithme, c'est x
 
     // While l != lp, 6 coloration, else it's 3 coloration algorithm or finished
     private int l;
-    private int lp;
-    private int numberToCheck = 6;
+    private int lp; // Condition d'arrêt du 6-coloration lp == l
+
+    /**
+     * Première ronde à 6 -> Envoie des id au voisin
+     * Si remainingRounds <= 5 Traitement des noeuds à l'id remainingRounds + envoie des ID.
+     * Si remainingRounds < 2 fin de l'algorithme de 3-coloration
+     */
+    private int remainingRounds = 6; // 6 = première ronde où envoie d'id, 5 > changement d'id des noeuds à la couleur number
 
     @Override
     public void onStart() {
@@ -27,31 +33,37 @@ public class ColoringNode extends Node {
     @Override
     public void onClock(){
         if (lp == l) {
-            if (numberToCheck > 2) {
+            if (remainingRounds > 2) {
                 coloration3Send();
 
-                if (numberToCheck == colorId)
+                if (remainingRounds == colorId)
                     coloration3Receive();
 
-                --numberToCheck;
+                --remainingRounds;
             }
         } else
             coloration6();
     }
 
     private void coloration6(){
+        int parentColor = -1; // y
+        int childColor = -1; // z
+        // colorId -> x
+
         for (Message m : getMailbox()){
-            if (m.getSender() != parent)
-                continue;
+            if (m.getSender() == parent)
+                parentColor = (int)m.getContent();
+            else
+                childColor = (int)m.getContent();
+        }
 
-            int y_color = (int)m.getContent();
-
-            colorId = posDif(colorId, y_color);
+        if (parentColor != -1 && childColor != -1) {
+            colorId = posDif(posDif(colorId, childColor), posDif(parentColor, colorId));
             setColor(Color.getColorAt(colorId));
 
             lp = l;
 
-            l = 1 + log2Ceil(l);
+            l = 1 + log2Ceil(1 + log2Ceil(l));
         }
 
         getMailbox().clear();
@@ -59,7 +71,8 @@ public class ColoringNode extends Node {
 
         if (lp != l){
             for (Node node : getNeighbors()) {
-                if (node.getID() != parent.getID())
+                // Ancien cas où 6-coloration non optimisé
+                //if (node.getID() != parent.getID())
                     send(node, new Message(colorId));
             }
         }
@@ -67,7 +80,7 @@ public class ColoringNode extends Node {
 
     private void coloration3Send(){
         for (Node node : getNeighbors()){
-            send(node, new Message(numberToCheck +  " " + colorId));
+            send(node, new Message(remainingRounds +  " " + colorId));
             System.out.println("Send to neighbors : " + colorId);
         }
     }
@@ -80,7 +93,7 @@ public class ColoringNode extends Node {
             String[] arr = ((String)message.getContent()).split(" ");
 
             // If the message was sent the previous round
-            if (Integer.parseInt(arr[0]) == numberToCheck + 1)
+            if (Integer.parseInt(arr[0]) == remainingRounds + 1)
                 colors.add(Integer.parseInt(arr[1]));
 
             getMailbox().remove(i);
