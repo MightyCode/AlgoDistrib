@@ -17,6 +17,7 @@ public class ColoringNode extends Node {
 
     @Override
     public void onStart() {
+        n = getTopology().getNodes().size();
         colorId = getID();
         setColor(Color.getColorAt(colorId)); // couleur = ID
         l = log2Ceil(n);
@@ -39,8 +40,6 @@ public class ColoringNode extends Node {
     }
 
     private void normalRound(){
-        System.out.println("Normal round");
-
         for (Message m : getMailbox()){
             if (m.getSender() != parent)
                 continue;
@@ -54,6 +53,7 @@ public class ColoringNode extends Node {
 
             l = 1 + log2Ceil(l);
         }
+
         getMailbox().clear();
 
 
@@ -75,14 +75,15 @@ public class ColoringNode extends Node {
     private void lastRoundReceive(){
         ArrayList<Integer> colors = new ArrayList<>();
 
-        for (Message message : getMailbox()){
+        for (int i = getMailbox().size() - 1; i >= 0; --i){
+            Message message = getMailbox().get(i);
             String[] arr = ((String)message.getContent()).split(" ");
 
             if (Integer.parseInt(arr[0]) == numberToCheck + 1)
                 colors.add(Integer.parseInt(arr[1]));
-        }
 
-        getMailbox().clear();
+            getMailbox().remove(i);
+        }
 
         for (int i = 0; i < colorId; ++i){
             boolean founded = false;
